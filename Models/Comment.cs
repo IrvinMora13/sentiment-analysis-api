@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SentimentsApi.Models{
+namespace SentimentApi.Models{
     public class Comment
     {
         public int Id { get; set; }
