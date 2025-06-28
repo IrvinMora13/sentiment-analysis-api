@@ -182,23 +182,22 @@ docker exec -it sentiment-container /bin/sh
 ```
 - Ejecutar los siguientes comandos
 ```shell
-apt update && apt install -y iputils-ping telnet ping host.docker.internal telnet host.docker.internal 1433
+apt update 
+
+apt install -y iputils-ping telnet
+
+ping host.docker.internal
+
+telnet host.docker.internal 1433
 ```
-## Notas
 
-- El análisis de sentimiento es básico y case-insensitive.
-- 
+## ## Validaciones y manejo de errores
 
-  
-
-- Próximos pasos:
-
-  - agregar manejo de errores
-
-  - pruebas automáticas
-
-  
-
+- Todos los DTOs usan atributos de validación (`[Required]`, `[StringLength]`, `[RegularExpression]`).
+- El middleware `GlobalExceptionMiddleware` captura y responde con JSON ante errores inesperados, errores de base de datos, parámetros inválidos, etc.
+- Los errores de validación retornan HTTP 400 con detalles.
+- Los errores de base de datos retornan HTTP 503.
+- Los recursos no encontrados retornan HTTP 404.
 ## Autor
 
   

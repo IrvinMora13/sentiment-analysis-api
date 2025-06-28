@@ -13,24 +13,34 @@ namespace SentimentApi.Controllers
     {
         private readonly CommentsContext _context;
         private readonly InterfaceSentimentAnalyzer _analyzer;
+        private readonly ILogger<CommentsController> _logger;
 
-        public CommentsController(CommentsContext context, InterfaceSentimentAnalyzer analyzer)
+        private readonly string[] _validSentiments = { "positivo", "negativo", "neutral" };
+        public CommentsController(CommentsContext context, InterfaceSentimentAnalyzer analyzer,ILogger<CommentsController> logger)
         {
-            _context = context;
-            _analyzer = analyzer;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _analyzer = analyzer ?? throw new ArgumentNullException(nameof(analyzer));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            
         }
 
         // POST /api/comments
         [HttpPost]
         public async Task<ActionResult<CommentResponseDto>> PostComment([FromBody] CreateCommentDto dto)
         {
-            var sentiment = _analyzer.AnalyzeSentiment(dto.CommentText);
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("Modelo inválido en PostComment: {@ModelState}", ModelState);
+                return BadRequest(ModelState);
+            }
+
+            var sentiment = _analyzer.AnalyzeSentiment(dto.Text);
 
             var comment = new Comment
             {
                 ProductId = dto.ProductId,
                 UserId = dto.UserId,
-                CommentText = dto.CommentText,
+                CommentText = dto.Text,
                 Sentiment = sentiment,
                 CreatedAt = DateTime.UtcNow
             };
@@ -84,7 +94,11 @@ namespace SentimentApi.Controllers
         public async Task<ActionResult<CommentResponseDto>> GetComment(int id)
         {
             var comment = await _context.Comments.FindAsync(id);
-            if (comment == null) return NotFound();
+            if (comment == null)
+            {
+                _logger.LogInformation("Comentario no encontrado: {Id}", id);
+                return NotFound();
+            }
 
             var response = new CommentResponseDto
             {
